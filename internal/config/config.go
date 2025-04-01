@@ -18,11 +18,11 @@ var config *Config
 func Load() *Config {
 	if config == nil {
 		config = &Config{
-			DATABASE_URL: getEnvAsString("DATABASE_URL", "postgres://postgres:password@localhost/clutter?sslmode=disable"),
+			DATABASE_URL: getEnvAsString("DATABASE_URL", "clickhouse://default:@localhost:9000?database=clutter"),
 			BIND_ADDRESS: getEnvAsString("BIND_ADDRESS", "127.0.0.1"),
 			PORT:         getEnvAsInt("PORT", 8080),
 			DEBUG:        getEnvAsBool("DEBUG", false),
-			STORAGE_MODE: getEnvAsString("STORAGE_MODE", "memory"),
+			STORAGE_MODE: getEnvAsString("STORAGE_MODE", "clickhouse"),
 		}
 	}
 	return config
