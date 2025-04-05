@@ -1,4 +1,4 @@
-module github.com/ThEditor/clutter
+module github.com/ThEditor/clutter-paper
 
 go 1.24.0
 

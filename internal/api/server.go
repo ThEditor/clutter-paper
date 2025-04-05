@@ -4,7 +4,7 @@ import (
 	"net/http"
 	"strconv"
 
-	"github.com/ThEditor/clutter/internal/log"
+	"github.com/ThEditor/clutter-paper/internal/log"
 )
 
 func corsMiddleware(next http.Handler) http.Handler {

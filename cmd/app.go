@@ -1,9 +1,9 @@
 package main
 
 import (
-	"github.com/ThEditor/clutter/internal/api"
-	"github.com/ThEditor/clutter/internal/config"
-	"github.com/ThEditor/clutter/internal/storage"
+	"github.com/ThEditor/clutter-paper/internal/api"
+	"github.com/ThEditor/clutter-paper/internal/config"
+	"github.com/ThEditor/clutter-paper/internal/storage"
 )
 
 func main() {
