@@ -4,6 +4,7 @@ import (
 	"net/http"
 	"strconv"
 
+	"github.com/ThEditor/clutter-paper/internal/api/routes"
 	"github.com/ThEditor/clutter-paper/internal/log"
 )
 
@@ -31,6 +32,8 @@ func Start(address string, port int) {
 		w.WriteHeader(http.StatusOK)
 		_, _ = w.Write([]byte("Hello, World!"))
 	})
+
+	mux.HandleFunc("/api/event", routes.PostEvent)
 
 	log.Info("API server listening on " + address + ":" + strconv.Itoa(port))
 	err := http.ListenAndServe(address+":"+strconv.Itoa(port), corsMiddleware(mux))
