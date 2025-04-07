@@ -21,9 +21,78 @@ func NewClickHouseStorage(dsn string) (*ClickHouseStorage, error) {
 		return nil, fmt.Errorf("failed to ping ClickHouse: %w", err)
 	}
 
-	return &ClickHouseStorage{db: db}, nil
+	storage := &ClickHouseStorage{db: db}
+	if err := storage.ensureTables(); err != nil {
+		return nil, fmt.Errorf("failed to ensure tables: %w", err)
+	}
+
+	return storage, nil
 }
 
 func (s *ClickHouseStorage) Close() error {
 	return s.db.Close()
+}
+
+func (s *ClickHouseStorage) ensureTables() error {
+	tableSchemas := []string{
+		`
+		CREATE TABLE IF NOT EXISTS events (
+			id UUID DEFAULT generateUUIDv4(),
+			visitor_ip String,
+			visitor_user_agent String,
+			site_id String,
+			referrer String,
+			created_on DateTime,
+			page String,
+			PRIMARY KEY (id)
+		) ENGINE = MergeTree()
+		`,
+		// others
+	}
+
+	for _, schema := range tableSchemas {
+		if _, err := s.db.Exec(schema); err != nil {
+			return fmt.Errorf("failed to create table: %w", err)
+		}
+	}
+
+	return nil
+}
+
+type EventData struct {
+	VisitorIP        string
+	VisitorUserAgent string
+	SiteID           string
+	Referrer         string
+	Page             string
+}
+
+func (s *ClickHouseStorage) InsertEvent(data EventData) error {
+	query := `
+			INSERT INTO events (
+					visitor_ip,
+					visitor_user_agent,
+					site_id,
+					referrer,
+					created_on,
+					page
+			) VALUES (
+					?, ?, ?, ?, now(), ?
+			)
+	`
+
+	_, err := s.db.Exec(
+		query,
+		data.VisitorIP,
+		data.VisitorUserAgent,
+		data.SiteID,
+		data.Referrer,
+		data.Page,
+	)
+
+	if err != nil {
+		return fmt.Errorf("failed to insert event: %w", err)
+	}
+
+	return nil
 }
