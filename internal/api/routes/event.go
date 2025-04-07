@@ -5,11 +5,13 @@ import (
 	"errors"
 	"net/http"
 	"strings"
+
+	"github.com/ThEditor/clutter-paper/internal/storage"
 )
 
 type RequestData struct {
 	VisitorUserAgent string
-	SiteId           string
+	SiteID           string
 	Referrer         string
 	Page             string
 }
@@ -18,7 +20,7 @@ func validate(data RequestData) error {
 	if strings.TrimSpace(data.VisitorUserAgent) == "" {
 		return errors.New("visitor user agent is required")
 	}
-	if strings.TrimSpace(data.SiteId) == "" {
+	if strings.TrimSpace(data.SiteID) == "" {
 		return errors.New("site ID is required")
 	}
 	if strings.TrimSpace(data.Page) == "" {
@@ -48,6 +50,25 @@ func PostEvent(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// check for site_id in cache/postgres
+
+	visitorIP := r.Header.Get("X-Forwarded-For")
+	if visitorIP == "" {
+		visitorIP = r.RemoteAddr
+	}
+
+	eventData := storage.EventData{
+		VisitorIP:        visitorIP,
+		VisitorUserAgent: data.VisitorUserAgent,
+		SiteID:           data.SiteID,
+		Referrer:         data.Referrer,
+		Page:             data.Page,
+	}
+
+	clickhouse := r.Context().Value("clickhouse").(*storage.ClickHouseStorage)
+	if err := clickhouse.InsertEvent(eventData); err != nil {
+		http.Error(w, "Failed to store event: "+err.Error(), http.StatusInternalServerError)
+		return
+	}
 
 	w.WriteHeader(http.StatusOK)
 	w.Header().Set("Content-Type", "application/json")
