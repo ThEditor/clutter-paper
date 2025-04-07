@@ -32,6 +32,7 @@ func validate(data RequestData) error {
 func PostEvent(w http.ResponseWriter, r *http.Request) {
 	if r.Method != "POST" {
 		http.Error(w, "Invalid request method", http.StatusMethodNotAllowed)
+		return
 	}
 
 	var data RequestData
