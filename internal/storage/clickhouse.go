@@ -3,6 +3,7 @@ package storage
 import (
 	"database/sql"
 	"fmt"
+	"time"
 
 	_ "github.com/ClickHouse/clickhouse-go"
 )
@@ -68,30 +69,44 @@ type EventData struct {
 }
 
 func (s *ClickHouseStorage) InsertEvent(data EventData) error {
-	query := `
-			INSERT INTO events (
-					visitor_ip,
-					visitor_user_agent,
-					site_id,
-					referrer,
-					created_on,
-					page
-			) VALUES (
-					?, ?, ?, ?, now(), ?
-			)
-	`
+	tx, err := s.db.Begin()
+	if err != nil {
+		return fmt.Errorf("failed to begin transaction: %w", err)
+	}
 
-	_, err := s.db.Exec(
-		query,
+	stmt, err := tx.Prepare(`
+        INSERT INTO events (
+            visitor_ip,
+            visitor_user_agent,
+            site_id,
+            referrer,
+            created_on,
+            page
+        ) VALUES (
+            ?, ?, ?, ?, ?, ?
+        )
+    `)
+	if err != nil {
+		tx.Rollback()
+		return fmt.Errorf("failed to prepare statement: %w", err)
+	}
+	defer stmt.Close()
+
+	_, err = stmt.Exec(
 		data.VisitorIP,
 		data.VisitorUserAgent,
 		data.SiteID,
 		data.Referrer,
+		time.Now(),
 		data.Page,
 	)
-
 	if err != nil {
-		return fmt.Errorf("failed to insert event: %w", err)
+		tx.Rollback()
+		return fmt.Errorf("failed to execute statement: %w", err)
+	}
+
+	if err := tx.Commit(); err != nil {
+		return fmt.Errorf("failed to commit transaction: %w", err)
 	}
 
 	return nil

@@ -1,7 +1,6 @@
 package api
 
 import (
-	"context"
 	"net/http"
 	"strconv"
 
@@ -27,21 +26,6 @@ func corsMiddleware(next http.Handler) http.Handler {
 	})
 }
 
-type contextKey string
-
-const (
-	clickhouseKey contextKey = "clickhouse"
-)
-
-func withClickHouse(clickhouse *storage.ClickHouseStorage) func(http.Handler) http.Handler {
-	return func(next http.Handler) http.Handler {
-		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			ctx := context.WithValue(r.Context(), clickhouseKey, clickhouse)
-			next.ServeHTTP(w, r.WithContext(ctx))
-		})
-	}
-}
-
 func Start(address string, port int, clickhouse *storage.ClickHouseStorage) {
 	mux := http.NewServeMux()
 
@@ -50,10 +34,12 @@ func Start(address string, port int, clickhouse *storage.ClickHouseStorage) {
 		_, _ = w.Write([]byte("Hello, World!"))
 	})
 
-	mux.HandleFunc("/api/event", routes.PostEvent)
+	mux.HandleFunc("/api/event", func(w http.ResponseWriter, r *http.Request) {
+		routes.PostEvent(w, r, clickhouse)
+	})
 
 	log.Info("API server listening on " + address + ":" + strconv.Itoa(port))
-	err := http.ListenAndServe(address+":"+strconv.Itoa(port), corsMiddleware(withClickHouse(clickhouse)(mux)))
+	err := http.ListenAndServe(address+":"+strconv.Itoa(port), corsMiddleware(mux))
 	if err != nil {
 		log.Info("Server failed to start: " + err.Error())
 	}

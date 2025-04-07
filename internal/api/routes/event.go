@@ -29,7 +29,7 @@ func validate(data RequestData) error {
 	return nil
 }
 
-func PostEvent(w http.ResponseWriter, r *http.Request) {
+func PostEvent(w http.ResponseWriter, r *http.Request, clickhouse *storage.ClickHouseStorage) {
 	if r.Method != "POST" {
 		http.Error(w, "Invalid request method", http.StatusMethodNotAllowed)
 		return
@@ -65,7 +65,6 @@ func PostEvent(w http.ResponseWriter, r *http.Request) {
 		Page:             data.Page,
 	}
 
-	clickhouse := r.Context().Value("clickhouse").(*storage.ClickHouseStorage)
 	if err := clickhouse.InsertEvent(eventData); err != nil {
 		http.Error(w, "Failed to store event: "+err.Error(), http.StatusInternalServerError)
 		return
