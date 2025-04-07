@@ -1,11 +1,13 @@
 package api
 
 import (
+	"context"
 	"net/http"
 	"strconv"
 
 	"github.com/ThEditor/clutter-paper/internal/api/routes"
 	"github.com/ThEditor/clutter-paper/internal/log"
+	"github.com/ThEditor/clutter-paper/internal/storage"
 )
 
 func corsMiddleware(next http.Handler) http.Handler {
@@ -25,7 +27,22 @@ func corsMiddleware(next http.Handler) http.Handler {
 	})
 }
 
-func Start(address string, port int) {
+type contextKey string
+
+const (
+	clickhouseKey contextKey = "clickhouse"
+)
+
+func withClickHouse(clickhouse *storage.ClickHouseStorage) func(http.Handler) http.Handler {
+	return func(next http.Handler) http.Handler {
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			ctx := context.WithValue(r.Context(), clickhouseKey, clickhouse)
+			next.ServeHTTP(w, r.WithContext(ctx))
+		})
+	}
+}
+
+func Start(address string, port int, clickhouse *storage.ClickHouseStorage) {
 	mux := http.NewServeMux()
 
 	mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
@@ -36,7 +53,7 @@ func Start(address string, port int) {
 	mux.HandleFunc("/api/event", routes.PostEvent)
 
 	log.Info("API server listening on " + address + ":" + strconv.Itoa(port))
-	err := http.ListenAndServe(address+":"+strconv.Itoa(port), corsMiddleware(mux))
+	err := http.ListenAndServe(address+":"+strconv.Itoa(port), corsMiddleware(withClickHouse(clickhouse)(mux)))
 	if err != nil {
 		log.Info("Server failed to start: " + err.Error())
 	}
