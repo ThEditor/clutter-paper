@@ -10,10 +10,10 @@ import (
 )
 
 type RequestData struct {
-	VisitorUserAgent string
-	SiteID           string
-	Referrer         string
-	Page             string
+	VisitorUserAgent string `json:"visitor_user_agent"`
+	SiteID           string `json:"site_id"`
+	Referrer         string `json:"referrer"`
+	Page             string `json:"page"`
 }
 
 func validate(data RequestData) error {
