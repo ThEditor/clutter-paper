@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"strings"
 
+	"github.com/ThEditor/clutter-paper/internal/api/common"
 	"github.com/ThEditor/clutter-paper/internal/storage"
 )
 
@@ -29,7 +30,7 @@ func validate(data RequestData) error {
 	return nil
 }
 
-func PostEvent(w http.ResponseWriter, r *http.Request, clickhouse *storage.ClickHouseStorage) {
+func PostEvent(w http.ResponseWriter, r *http.Request, s *common.Server) {
 	if r.Method != "POST" {
 		http.Error(w, "Invalid request method", http.StatusMethodNotAllowed)
 		return
@@ -50,7 +51,12 @@ func PostEvent(w http.ResponseWriter, r *http.Request, clickhouse *storage.Click
 		return
 	}
 
-	// check for site_id in cache/postgres
+	err := common.CheckSiteID(data.SiteID, s)
+
+	if err != nil {
+		http.Error(w, "Invalid Site ID", http.StatusBadRequest)
+		return
+	}
 
 	visitorIP := r.Header.Get("X-Forwarded-For")
 	if visitorIP == "" {
@@ -65,7 +71,7 @@ func PostEvent(w http.ResponseWriter, r *http.Request, clickhouse *storage.Click
 		Page:             data.Page,
 	}
 
-	if err := clickhouse.InsertEvent(eventData); err != nil {
+	if err := s.Clickhouse.InsertEvent(eventData); err != nil {
 		http.Error(w, "Failed to store event: "+err.Error(), http.StatusInternalServerError)
 		return
 	}
