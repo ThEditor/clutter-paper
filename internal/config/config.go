@@ -22,7 +22,7 @@ func Load() *Config {
 		config = &Config{
 			DATABASE_URL: getEnvAsString("DATABASE_URL", "clickhouse://default:@localhost:9000?database=clutter"),
 			REDIS_URL:    getEnvAsString("REDIS_URL", "redis://:admin@localhost:6379"),
-			POSTGRES_URL: getEnvAsString("REDIS_URL", "postgres://admin:admin@localhost:5432/mydb?sslmode=disable"),
+			POSTGRES_URL: getEnvAsString("POSTGRES_URL", "postgres://admin:admin@localhost:5432/mydb?sslmode=disable"),
 			BIND_ADDRESS: getEnvAsString("BIND_ADDRESS", "127.0.0.1"),
 			PORT:         getEnvAsInt("PORT", 8080),
 			DEBUG:        getEnvAsBool("DEBUG", false),
