@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"time"
 
 	"github.com/ThEditor/clutter-paper/internal/api"
 	"github.com/ThEditor/clutter-paper/internal/config"
@@ -12,7 +13,7 @@ func main() {
 	ctx := context.Background()
 	cfg := config.Load()
 
-	store, err := storage.NewClickHouseStorage(cfg.DATABASE_URL)
+	store, err := storage.NewClickHouseStorage(cfg.DATABASE_URL, 500, 15*time.Second)
 	if err != nil {
 		panic(err)
 	}
