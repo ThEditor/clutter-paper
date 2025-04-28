@@ -8,6 +8,15 @@ import (
 
 func Logger(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		fmt.Printf(
+			"[INC] %s \"%s %s %s\" from %s\n",
+			time.Now().Format("2006/01/02 15:04:05"),
+			r.Method,
+			r.URL.String(),
+			r.Proto,
+			r.RemoteAddr,
+		)
+
 		start := time.Now()
 
 		ww := newResponseWriterWrapper(w)
@@ -15,7 +24,7 @@ func Logger(next http.Handler) http.Handler {
 		next.ServeHTTP(ww, r)
 
 		fmt.Printf(
-			"%s \"%s %s %s\" from %s - %d %dB in %v\n",
+			"[OUT] %s \"%s %s %s\" from %s - %d %dB in %v\n",
 			time.Now().Format("2006/01/02 15:04:05"),
 			r.Method,
 			r.URL.String(),
